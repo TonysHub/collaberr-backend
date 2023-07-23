@@ -4,7 +4,7 @@ from django.conf import settings
 
 class YoutubeCredential(models.Model):
     class Meta:
-        db_table = 'youtube_credential'
+        db_table = 'youtube_credentials'
         verbose_name = 'Youtube Credential'
         verbose_name_plural = 'Youtube Credentials'
 

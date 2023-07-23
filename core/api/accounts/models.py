@@ -52,9 +52,6 @@ class Account(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    def __str__(self):
-        return f'{self.username}'
-
     def has_module_perms(self, app_label):
         return self.is_superuser
 

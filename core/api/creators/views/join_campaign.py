@@ -1,5 +1,5 @@
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
 from rest_framework.decorators import permission_classes, api_view
 
 from core.api.campaigns.models import Campaign
@@ -18,7 +18,6 @@ def request_to_join_campaign(request):
     campaign = Campaign.objects.get(id=campaign_id)
     if campaign.is_active and campaign.is_recruiting:
         creator = Creator.objects.get(account_id=request.user)
-        # creator.request_campaign(campaign)
         campaign.add_requested_creator(creator)
         logger.info(f"Creator {creator} requested to join campaign {campaign}")
         return Response(status=status.HTTP_200_OK, data={'message': 'Successfully requested'})

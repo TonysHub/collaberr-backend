@@ -1,4 +1,6 @@
 from io import FileIO
+import logging
+import os
 import google.oauth2.credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -7,11 +9,13 @@ SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
 API_SERVICE_NAME = 'youtubereporting'
 API_VERSION = 'v1'
 
+logger = logging.getLogger(__name__)
 
-class YouTubeReportHook:
+
+class YoutubeReportHook:
     """
-    Plugin to retrieve YouTube Report for User
-    Ex. yt_report_hook = YouTubeReportHook(**credentials)
+    Plugin to retrieve Youtube Report for User
+    Ex. yt_report_hook = YoutubeReportHook(**credentials)
         yt_report_hook.get_report_types()
         yt_report_hook.create_reporting_job('channel_traffic_source_a2', 'Traffic Source')
         yt_report_hook.list_reporting_jobs()
@@ -85,14 +89,20 @@ class YouTubeReportHook:
         """
         List all jobs for the current account
         """
-        # Potentially, return list of job_ids
         results = self.service.jobs().list().execute()
 
         if 'jobs' in results and results['jobs']:
             jobs = results['jobs']
+            job_info = []
             for job in jobs:
                 print('Reporting job id: %s\n name: %s\n for reporting type: %s\n'
                       % (job['id'], job['name'], job['reportTypeId']))
+                job_info.append({
+                    "id": job['id'],
+                    "name": job['name'],
+                    "report_type": job['reportTypeId'],
+                })
+            return job_info
         else:
             print('No jobs found')
             return False
@@ -110,26 +120,42 @@ class YouTubeReportHook:
             ).execute()
             if 'reports' in results and results['reports']:
                 reports = results['reports']
+                report_url_info = []
                 for report in reports:
-                    print('Report dates: %s to %s\n       download URL: %s\n'
-                          % (report['startTime'], report['endTime'], report['downloadUrl']))
+                    # print('Report times: %s to %s\n       download URL: %s\n'
+                    #       % (report['startTime'], report['endTime'], report['downloadUrl']))
+                    report_url_info.append({
+                        "report_url": report['downloadUrl'],
+                        "start_time": report['startTime'],
+                        "end_time": report['endTime'],
+                    })
+                return report_url_info
             else:
                 print("No reports found.")
         except Exception as e:
             print(f"An error occurred: {str(e)}")
 
     def download_report(self, report_url, local_file):
+        dir = os.path.dirname(local_file)
+
+        # Create the dir if it doesn't exist
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
         request = self.service.media().download(
             resourceName=' '
         )
         request.uri = report_url
         fh = FileIO(local_file, mode='wb')
-        # Stream/download the report in a single request.
         downloader = MediaIoBaseDownload(fh, request, chunksize=-1)
 
         done = False
         while done is False:
             status, done = downloader.next_chunk()
         if status:
+            print(f'Downloaded {local_file}')
             print('Download %d%%.' % int(status.progress() * 100))
         print('Download Complete!')
+
+    def upload_to_s3(self, local_file):
+        pass

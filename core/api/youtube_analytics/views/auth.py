@@ -1,17 +1,22 @@
 import requests
+import logging
 from urllib.parse import urlencode, parse_qs, urlparse
+
 # django imports
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.conf import settings
+
 # drf imports
 from rest_framework.views import APIView
+
 # google imports
 from google_auth_oauthlib.flow import Flow
+
 # collaberr imports
 from core.api.youtube_analytics.serializers import YoutubeCredentialsSerializer
 from core.api.creators.models import Creator
-import logging
+from core.plugins.youtube_analytics.report import YoutubeReportHook
 
 SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
 REDIRECT_URI = "http://localhost:8000/api/youtube/oauth2callback/"
@@ -23,21 +28,6 @@ class YoutubeAuthView(APIView):
     """
     Pass in Collaberr Auth redirect URL to frontend
     """
-    def get(self, request):
-        if request.user.is_authenticated:
-            flow = Flow.from_client_secrets_file(
-                settings.YOUTUBE_SECRETS_FILE,
-                scopes=SCOPES,
-                redirect_uri=REDIRECT_URI
-            )
-            authorization_url, state = flow.authorization_url(
-                access_type='offline',
-                include_granted_scopes='true'
-            )
-            return JsonResponse({'authorization_url': authorization_url})
-        else:
-            return HttpResponseForbidden('Access denied')
-
     def patch(self, request):
         """
         After user has authorized Collaberr,
@@ -58,8 +48,6 @@ class YoutubeAuthView(APIView):
             try:
                 creator = Creator.objects.get(account_id=account_id)
                 creator.channel_handle = request.data['channel_handle']
-                # creator.channel_id = request.data['channel_id']
-                # creator.channel_name = request.data['channel_name']
                 creator.save()
             except Creator.DoesNotExist:
                 JsonResponse({'error': 'Creator does not exist'})
@@ -115,10 +103,16 @@ class YoutubeConfirmView(APIView):
         creator = Creator.objects.get(account_id=request.user.id)
         if serializer.is_valid(raise_exception=True):
             if creator.verify_channel(**serializer.validated_data):
+                yt_report_hook = YoutubeReportHook(**serializer.validated_data)
+                yt_report_hook.create_reporting_job('channel_demographics_a1', 'Channel Demographics')
+                logger.info(f'Created channel_demographics job for {creator.channel_handle}')
+                yt_report_hook.create_reporting_job('channel_basic_a2', 'Channel Basic')
+                logger.info(f'Created channel_basic job for {creator.channel_handle}')
+
                 serializer.save()
-                return redirect('http://localhost:3000/youtubeConfirm/')
+                return redirect('http://localhost:3000/youtube-confirm/')
             else:
-                return HttpResponseBadRequest('Invalid channel')
+                return redirect('http://localhost:3000/youtube-declined/')
         return HttpResponseBadRequest('Invalid parameters')
 
 

@@ -12,3 +12,4 @@ LOGGING['handlers']['console']['level'] = 'DEBUG'  # type: ignore
 LOGGING['handlers']['console']['formatter'] = 'colored'  # type: ignore
 
 YOUTUBE_SECRETS_FILE = BASE_DIR / 'youtube_secret.json'
+YOUTUBE_CREDENTIALS_FILE = BASE_DIR / 'youtube_credential_secret.csv'

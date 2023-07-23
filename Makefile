@@ -27,6 +27,9 @@ test:
 flush:
 	poetry run python3 -m core.manage flush
 
+import_data:
+	poetry run python3 -m core.manage import_data_from_s3
+
 
 .PHONY: up-dependencies-only
 up-dependencies-only:

@@ -79,6 +79,7 @@ venv/
 
 # secrets
 *_secret.json
+*_secret.csv
 
 Dockerfile.test
-
+*.csv

@@ -1,10 +1,12 @@
+import requests
+import re
+
+# django imports
 from django.db import models
 from django.conf import settings
 
-from core.plugins.youtube_analytics.query import YouTubeQueryHook
-
-import requests
-import re
+# collaberr imports
+from core.plugins.youtube_analytics.query import YoutubeQueryHook
 
 
 class Creator(models.Model):
@@ -22,10 +24,12 @@ class Creator(models.Model):
         db_column='account_id',
     )
     earnings = models.PositiveIntegerField(default=0)
-    channel_id = models.CharField(max_length=255, null=True, blank=True)
-    channel_name = models.CharField(max_length=255, null=True, blank=True)
-    channel_handle = models.CharField(max_length=255, null=True, blank=True)
+    channel_id = models.CharField(max_length=100, null=True, blank=True)
+    channel_name = models.CharField(max_length=100, null=True, blank=True)
+    channel_handle = models.CharField(max_length=100, null=True, blank=True)
     channel_verified = models.BooleanField(default=False)
+    channel_registered_date = models.DateField(null=True, blank=True)
+    channel_report_generated = models.BooleanField(default=False)
 
     def request_campaign(self, campaign):
         if campaign not in self.requested_campaigns.all():
@@ -69,10 +73,12 @@ class Creator(models.Model):
             'dimensions': 'day',
             'sort': '-views',
         }
-        youtube_query_hook = YouTubeQueryHook(**credentials)
+        youtube_query_hook = YoutubeQueryHook(**credentials)
         query_result = youtube_query_hook.get_query(**query_params)
         if query_result:
             self.channel_verified = True
+            self.channel_registered_date = date.today()
+            # add celery task to update channel_report_generated field
             self.save()
             return True
         else:

@@ -7,10 +7,10 @@ API_SERVICE_NAME = 'youtubeAnalytics'
 API_VERSION = 'v2'
 
 
-class YouTubeQueryHook:
+class YoutubeQueryHook:
     """
-    Plugin to retrieve YouTube Report for User
-    Ex. youtube_hook = YouTubeQueryHook(**credentials)
+    Plugin to retrieve Youtube Report for User
+    Ex. youtube_hook = YoutubeQueryHook(**credentials)
         query_result = hook.get_query(**query_param)
     """
     def __init__(self, **kwargs):
