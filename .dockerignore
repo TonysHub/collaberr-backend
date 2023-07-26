@@ -11,9 +11,9 @@ staticfiles
 media
 
 # Ignore environment-specific files
-.env
-.env.*
-.env.local
+# .env
+# .env.*
+# .env.local
 
 # Ignore Docker related files
 Dockerfile

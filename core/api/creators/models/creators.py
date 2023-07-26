@@ -1,5 +1,6 @@
-import requests
 import re
+import requests
+from datetime import date, timedelta
 
 # django imports
 from django.db import models
@@ -63,7 +64,6 @@ class Creator(models.Model):
         Verify channel based on query result from
         credentials and channel_id
         """
-        from datetime import date, timedelta
         self.channel_id, self.channel_name = self.get_channel_id_from_handle(self.channel_handle)
         query_params = {
             'channel_id': self.channel_id,

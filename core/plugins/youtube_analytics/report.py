@@ -1,9 +1,12 @@
-from io import FileIO
 import logging
 import os
+from io import FileIO
+
 import google.oauth2.credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
+
 
 SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
 API_SERVICE_NAME = 'youtubereporting'
@@ -75,15 +78,24 @@ class YoutubeReportHook:
         """
         Select a desired report type and name
         """
-        reporting_job = self.service.jobs().create(
-            body=dict(
-                reportTypeId=report_type_id,
-                name=report_name,
-            )
-        ).execute()
+        try:
+            reporting_job = self.service.jobs().create(
+                body=dict(
+                    reportTypeId=report_type_id,
+                    name=report_name,
+                )
+            ).execute()
+        except HttpError:
+            logger.warning(f'Report {report_name} already exists')
+            pass
 
         print('Reporting job "%s" created for reporting type "%s" at "%s"'
               % (reporting_job['name'], reporting_job['reportTypeId'], reporting_job['createTime']))
+        return {
+            "job_id": reporting_job['id'],
+            "job_name": reporting_job['name'],
+            "job_type": reporting_job['reportTypeId'],
+        }
 
     def list_reporting_jobs(self):
         """

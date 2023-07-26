@@ -1,3 +1,3 @@
-from .reports import YoutubeReports
+from .reports import YoutubeReportingJob
 from .auth import YoutubeCredential
 from .analytics import YoutubeChannelBasic

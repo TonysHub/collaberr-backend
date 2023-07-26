@@ -3,6 +3,7 @@ import boto3
 import dotenv
 import csv
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from core.api.youtube_analytics.models import YoutubeChannelBasic
@@ -19,7 +20,7 @@ class Command(BaseCommand):
         channel_id = 'UCvL8YftvoKcb_XPUHBCh8hw'
         bucket_name = 'collaberr'
         s3_folder_name = f'youtube_reports/{channel_id}/channel_basic_a2/'
-        local_temp_directory = '/tmp'
+        local_temp_directory = settings.BASE_DIR / 'tmp_data'
 
         s3_client = boto3.client(
             's3',
@@ -35,7 +36,11 @@ class Command(BaseCommand):
 
             # Download CSV files to the local temporary directory
             for csv_file in csv_files:
-                with open(os.path.join(local_temp_directory, os.path.basename(csv_file)), 'r') as f:
+                local_file_path = os.path.join(local_temp_directory, os.path.basename(csv_file))
+                print(f'local file: {local_file_path}')
+                print(f'csv file: {csv_file}')
+                s3_client.download_file(bucket_name, csv_file, local_file_path)
+                with open(local_file_path, 'r') as f:
                     # Deserialize the CSV data using the serializer
                     reader = csv.DictReader(f)
                     for row in reader:

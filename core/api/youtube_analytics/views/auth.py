@@ -3,7 +3,13 @@ import logging
 from urllib.parse import urlencode, parse_qs, urlparse
 
 # django imports
-from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse, HttpResponseForbidden, HttpResponseRedirect
+from django.http import (
+        HttpResponse,
+        HttpResponseBadRequest,
+        HttpResponseForbidden,
+        HttpResponseRedirect,
+        JsonResponse,
+    )
 from django.shortcuts import redirect
 from django.conf import settings
 
@@ -14,7 +20,10 @@ from rest_framework.views import APIView
 from google_auth_oauthlib.flow import Flow
 
 # collaberr imports
-from core.api.youtube_analytics.serializers import YoutubeCredentialsSerializer
+from core.api.youtube_analytics.serializers import (
+        YoutubeCredentialsSerializer,
+        YoutubeReportingJobSerializer,
+    )
 from core.api.creators.models import Creator
 from core.plugins.youtube_analytics.report import YoutubeReportHook
 
@@ -103,17 +112,25 @@ class YoutubeConfirmView(APIView):
         creator = Creator.objects.get(account_id=request.user.id)
         if serializer.is_valid(raise_exception=True):
             if creator.verify_channel(**serializer.validated_data):
-                yt_report_hook = YoutubeReportHook(**serializer.validated_data)
-                yt_report_hook.create_reporting_job('channel_demographics_a1', 'Channel Demographics')
-                logger.info(f'Created channel_demographics job for {creator.channel_handle}')
-                yt_report_hook.create_reporting_job('channel_basic_a2', 'Channel Basic')
-                logger.info(f'Created channel_basic job for {creator.channel_handle}')
-
+                jobs = {
+                    'channel_demographics_a1': 'Channel Demographics',
+                    'channel_basic_a2': 'Channel Basic'
+                }
+                self.create_youtube_job(jobs, **serializer.validated_data)
                 serializer.save()
                 return redirect('http://localhost:3000/youtube-confirm/')
             else:
                 return redirect('http://localhost:3000/youtube-declined/')
         return HttpResponseBadRequest('Invalid parameters')
+
+    def create_youtube_job(self, jobs, **validated_data):
+        yt_report_hook = YoutubeReportHook(**validated_data)
+        for job_id, job_name in jobs.items():
+            job_info = yt_report_hook.create_reporting_job(job_id, job_name)
+            job_serializer = YoutubeReportingJobSerializer(data=job_info)
+            if job_serializer.is_valid(raise_exception=True):
+                job_serializer.save()
+            logger.info(f'Created {job_id} job for {validated_data["channel_handle"]}')
 
 
 class YoutubeRevokeView(APIView):

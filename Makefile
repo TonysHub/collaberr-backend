@@ -30,6 +30,9 @@ flush:
 import_data:
 	poetry run python3 -m core.manage import_data_from_s3
 
+update_report:
+	poetry run python3 -m core.manage update_report_state
+
 
 .PHONY: up-dependencies-only
 up-dependencies-only:
