@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from core.general.permissions import IsBusiness
 from core.api.creators.models import Creator
-from core.api.creators.serializers import CreatorModelSerializer
+from core.api.creators.serializers import CreatorSerializer
 from core.api.campaigns.models import Campaign
 
 import logging
@@ -17,7 +17,7 @@ class CampaignCreatorsListView(ListAPIView):
     """
     queryset = Creator.objects.all()
     permission_classes = [IsBusiness]
-    serializer_class = CreatorModelSerializer
+    serializer_class = CreatorSerializer
 
     def get(self, request, campaign_id):
         try:

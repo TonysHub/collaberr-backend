@@ -27,7 +27,7 @@ class CampaignViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        campaign = serializer.save()
+        campaign = serializer.create(serializer.validated_data)
         read_serializer = CampaignReadSerializer(campaign)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 

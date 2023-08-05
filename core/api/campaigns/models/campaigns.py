@@ -3,6 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MaxLengthValidator
 
+# from core.api.campaigns.managers import CampaignManager
 from core.general.models import CreatedModified
 
 import logging
@@ -36,6 +37,8 @@ class Campaign(CreatedModified):
         IGTV = 'IGTV'
         TIKTOK_VIDEO = 'Tiktok Video'
 
+    # objects = CampaignManager()
+
     id = models.AutoField(
             primary_key=True,
             unique=True,
@@ -53,6 +56,7 @@ class Campaign(CreatedModified):
                             null=True,
                             blank=True
                         )
+    thumbnail_url = models.URLField(null=True, blank=True)
     category = models.TextField(choices=Category.choices)
     platform = models.TextField(choices=Platform.choices)
     recruit_start_date = models.DateField()
@@ -94,6 +98,23 @@ class Campaign(CreatedModified):
                                 blank=True
                             )
 
+    # content actions
+    content_submitted = models.ManyToManyField(
+                                'contents.Content',
+                                related_name='campaigns_submitted',
+                                blank=True
+                            )
+    content_approved = models.ManyToManyField(
+                                'contents.Content',
+                                related_name='campaigns_approved',
+                                blank=True
+                            )
+    content_declined = models.ManyToManyField(
+                                'contents.Content',
+                                related_name='campaigns_declined',
+                                blank=True
+                            )
+
     def add_requested_creator(self, creator):
         if creator in self.requested_creators.all():
             logger.info(f'{creator} already requested to join {self}')
@@ -116,6 +137,27 @@ class Campaign(CreatedModified):
         if creator in self.approved_creators.all():
             self.approved_creators.remove(creator)
         logger.info(f'{creator} declined to join {self}')
+        self.save()
+
+    def add_content_submitted(self, content):
+        self.content_submitted.add(content)
+        logger.info(f'{content} submitted to {self}')
+        self.save()
+
+    def add_content_approved(self, content):
+        self.content_submitted.remove(content)
+        self.content_approved.add(content)
+        if content in self.content_declined.all():
+            self.content_declined.remove(content)
+        logger.info(f'{content} approved to {self}')
+        self.save()
+
+    def add_content_declined(self, content):
+        self.content_submitted.remove(content)
+        self.content_declined.add(content)
+        if content in self.content_approved.all():
+            self.content_approved.remove(content)
+        logger.info(f'{content} declined to {self}')
         self.save()
 
     def __str__(self):

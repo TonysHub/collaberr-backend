@@ -118,7 +118,7 @@ class YoutubeConfirmView(APIView):
                 }
                 self.create_youtube_job(jobs, **serializer.validated_data)
                 serializer.save()
-                return redirect('http://localhost:3000/youtube-confirm/')
+                return redirect('http://localhost:3000/youtube-confirmed/')
             else:
                 return redirect('http://localhost:3000/youtube-declined/')
         return HttpResponseBadRequest('Invalid parameters')
